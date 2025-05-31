@@ -1,22 +1,22 @@
 FROM php:8.2-apache
 
-RUN apt-get update && apt-get install -y \
-    git unzip curl libzip-dev zip \
-    && docker-php-ext-install zip pdo pdo_mysql
-
+# Enable Apache mod_rewrite
 RUN a2enmod rewrite
 
-WORKDIR /var/www
-COPY . .
-RUN mv public html
+# Set working directory
+WORKDIR /var/www/html
 
+# Copy files
 COPY . .
 
+# Set proper permissions
 RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 755 /var/www/html
 
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+# Set DocumentRoot to /public
+RUN sed -i 's|DocumentRoot /var/www/html|DocumentRoot /var/www/html/public|g' /etc/apache2/sites-available/000-default.conf
 
-RUN composer install --no-interaction --prefer-dist --optimize-autoloader
+# Set directory permissions for public
+RUN sed -i '/<Directory \/var\/www\/>/,/<\/Directory>/c\<Directory /var/www/html/public>\n\tOptions Indexes FollowSymLinks\n\tAllowOverride All\n\tRequire all granted\n</Directory>' /etc/apache2/apache2.conf
 
-EXPOSE 80
+CMD ["apache2-foreground"]
