@@ -6,7 +6,9 @@ RUN apt-get update && apt-get install -y \
 
 RUN a2enmod rewrite
 
-WORKDIR /var/www/html
+WORKDIR /var/www
+COPY . .
+RUN mv public html
 
 COPY . .
 
